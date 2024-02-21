@@ -144,6 +144,9 @@ namespace CGL
 						 e0,
 						 h1->face());
 
+		ad->setNeighbors(h0, ad->twin(), ad->vertex(), ad->edge(), ad->face());
+		cb->setNeighbors(h1, cb->twin(), cb->vertex(), cb->edge(), cb->face());
+
 		// Find the two faces bordering this edge.
 		
 		return EdgeIter();
