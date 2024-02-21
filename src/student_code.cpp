@@ -1,5 +1,8 @@
 #include "student_code.h"
+#include "CGL/vector3D.h"
 #include "mutablePriorityQueue.h"
+#include <complex>
+#include <vector>
 
 using namespace std;
 
@@ -86,7 +89,34 @@ namespace CGL
 		// Returns an approximate unit normal at this vertex, computed by
 		// taking the area-weighted average of the normals of neighboring
 		// triangles, then normalizing.
-		return Vector3D();
+		
+		std::vector<Vector3D> outer_vertices;
+		std::vector<Vector3D> cross_products;
+		Vector3D retval = Vector3D();
+
+		HalfedgeCIter h = halfedge();         // get the outgoing half-edge of the vertex
+		do {
+			HalfedgeCIter h_twin = h->twin(); // get the opposite half-edge
+			VertexCIter v = h_twin->vertex(); // vertex is the 'source' of the half-edge, so
+											  // h->vertex() is v, whereas h_twin->vertex()
+											  // is the neighboring vertex
+			outer_vertices.push_back(v->position);
+
+			h = h_twin->next();               // move to the next outgoing half-edge of the vertex
+		} while(h != halfedge());             // keep going until we are back where we were
+		
+		for (int i = 0; i < degree(); i++) {
+			Vector3D edge1 = outer_vertices[i % degree()] - position;
+			Vector3D edge2 = outer_vertices[(i + 1) % degree()] - position;
+
+			cross_products.push_back(cross(edge2, edge1));
+		}
+
+		for (int i = 0; i < degree(); i++) {
+			retval += cross_products[i];
+		}
+		
+		return retval.unit();
 	}
 
 	EdgeIter HalfedgeMesh::flipEdge( EdgeIter e0 )
