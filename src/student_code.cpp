@@ -131,19 +131,23 @@ namespace CGL
 
 		HalfedgeIter ad = h0->next();
 		HalfedgeIter cb = h1->next();
+		HalfedgeIter dc = ad->next();
+		HalfedgeIter ba = cb->next();
 
-		h0->setNeighbors(cb->next(),
+		h0->setNeighbors(ba,
 						 h1,
-						 ad->twin()->vertex(),
+						 dc->vertex(),
 						 e0,
 						 h0->face());
 
-		h1->setNeighbors(ad->next(),
+		h1->setNeighbors(dc,
 						 h0,
-						 cb->twin()->vertex(),
+						 ba->vertex(),
 						 e0,
 						 h1->face());
 
+		dc->setNeighbors(cb, dc->twin(), dc->vertex(), dc->edge(), dc->face());
+		ba->setNeighbors(ad, ba->twin(), ba->vertex(), ba->edge(), ba->face());
 		ad->setNeighbors(h0, ad->twin(), ad->vertex(), ad->edge(), ad->face());
 		cb->setNeighbors(h1, cb->twin(), cb->vertex(), cb->edge(), cb->face());
 
