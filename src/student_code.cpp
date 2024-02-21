@@ -123,6 +123,29 @@ namespace CGL
 	{
 		// TODO Part 4.
 		// This method should flip the given edge and return an iterator to the flipped edge.
+		HalfedgeIter h0 = e0->halfedge();
+		HalfedgeIter h1 = h0->twin();
+
+		if (h0->face()->isBoundary() || h1->face()->isBoundary())
+			return e0;
+
+		HalfedgeIter ad = h0->next();
+		HalfedgeIter cb = h1->next();
+
+		h0->setNeighbors(cb->next(),
+						 h1,
+						 ad->twin()->vertex(),
+						 e0,
+						 h0->face());
+
+		h1->setNeighbors(ad->next(),
+						 h0,
+						 cb->twin()->vertex(),
+						 e0,
+						 h1->face());
+
+		// Find the two faces bordering this edge.
+		
 		return EdgeIter();
 	}
 
