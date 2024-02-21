@@ -163,7 +163,7 @@ namespace CGL
 
 		//printf("halfedge: %p\nnext: %p, twin: %p\nvertex: %p, edge: %p, face: %p\n\n",
 		// 		h0, h0->next(), h0->twin(), h0->vertex(), h0->edge(), h0->face());
-		check_for(h0);
+		/*check_for(h0);
 		printf("\n");
 		check_for(h0->next());
 		printf("\n");
@@ -174,7 +174,7 @@ namespace CGL
 		check_for(h1->next());
 		printf("\n");
 		check_for(h1->next()->next());
-		printf("------------------\n");
+		printf("------------------\n");*/
 		return e0;
 	}
 
