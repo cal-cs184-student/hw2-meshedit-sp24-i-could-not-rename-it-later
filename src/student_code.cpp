@@ -126,34 +126,56 @@ namespace CGL
 		HalfedgeIter h0 = e0->halfedge();
 		HalfedgeIter h1 = h0->twin();
 
+		// Don't flip edges between boundaries.
 		if (h0->face()->isBoundary() || h1->face()->isBoundary())
 			return e0;
 
+		// Find four edges that need to be changed.
 		HalfedgeIter ad = h0->next();
 		HalfedgeIter cb = h1->next();
 		HalfedgeIter dc = ad->next();
 		HalfedgeIter ba = cb->next();
 
+		// Set half-edges of flipped edge appropariately.
 		h0->setNeighbors(ba,
 						 h1,
 						 dc->vertex(),
-						 e0,
+						 h0->edge(),
 						 h0->face());
 
 		h1->setNeighbors(dc,
 						 h0,
 						 ba->vertex(),
-						 e0,
+						 h1->edge(),
 						 h1->face());
-
-		dc->setNeighbors(cb, dc->twin(), dc->vertex(), dc->edge(), dc->face());
-		ba->setNeighbors(ad, ba->twin(), ba->vertex(), ba->edge(), ba->face());
-		ad->setNeighbors(h0, ad->twin(), ad->vertex(), ad->edge(), ad->face());
-		cb->setNeighbors(h1, cb->twin(), cb->vertex(), cb->edge(), cb->face());
-
-		// Find the two faces bordering this edge.
+		// Set other affected edges appropriately.
+		dc->setNeighbors(cb, dc->twin(), dc->vertex(), dc->edge(), h1->face());
+		ba->setNeighbors(ad, ba->twin(), ba->vertex(), ba->edge(), h0->face());
+		ad->setNeighbors(h0, ad->twin(), ad->vertex(), ad->edge(), h0->face());
+		cb->setNeighbors(h1, cb->twin(), cb->vertex(), cb->edge(), h1->face());
 		
-		return EdgeIter();
+		// Set vertices appropriately.
+		cb->vertex()->halfedge() = cb;
+		ad->vertex()->halfedge() = ad;
+		// Set faces appropriately.
+		cb->face()->halfedge() = cb;
+		ad->face()->halfedge() = ad;
+
+		//printf("halfedge: %p\nnext: %p, twin: %p\nvertex: %p, edge: %p, face: %p\n\n",
+		// 		h0, h0->next(), h0->twin(), h0->vertex(), h0->edge(), h0->face());
+		check_for(h0);
+		printf("\n");
+		check_for(h0->next());
+		printf("\n");
+		check_for(h0->next()->next());
+		printf("~~~~~~~~~~~~~~~~~~\n");
+		check_for(h1);
+		printf("\n");
+		check_for(h1->next());
+		printf("\n");
+		check_for(h1->next()->next());
+		printf("------------------\n");
+		return e0;
 	}
 
 	VertexIter HalfedgeMesh::splitEdge( EdgeIter e0 )

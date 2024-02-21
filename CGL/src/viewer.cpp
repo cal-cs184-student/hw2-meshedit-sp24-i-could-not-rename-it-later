@@ -13,8 +13,8 @@
 using namespace std;
 using namespace chrono;
 
-#define DEFAULT_W 960
-#define DEFAULT_H 640
+#define DEFAULT_W 1920
+#define DEFAULT_H 1080
 
 namespace CGL {
 

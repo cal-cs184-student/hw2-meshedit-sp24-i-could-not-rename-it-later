@@ -645,17 +645,17 @@ namespace CGL
           for (VertexIter v = verticesBegin(); v != verticesEnd(); v++) {
 
             if (v->halfedge() == h)
-              cout << "Halfedge " << elementAddress(h) << " is h.e. of "
+              cout << "Halfedge " << elementAddress(h) << " is h.e. of vertex "
               << elementAddress(v) << endl;
           }
           for (EdgeIter e = edgesBegin(); e != edgesEnd(); e++) {
 if (e->halfedge() == h)
-              cout << "Halfedge " << elementAddress(h) << " is h.e. of "
+              cout << "Halfedge " << elementAddress(h) << " is h.e. of edge "
               << elementAddress(e) << endl;
           }
           for (FaceIter f = facesBegin(); f != facesEnd(); f++) {
 if (f->halfedge() == h)
-              cout << "Halfedge " << elementAddress(h) << " is h.e. of "
+              cout << "Halfedge " << elementAddress(h) << " is h.e. of face "
               << elementAddress(f) << endl;
           }
 
