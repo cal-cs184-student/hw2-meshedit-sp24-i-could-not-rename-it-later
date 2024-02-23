@@ -1,9 +1,9 @@
 #include "student_code.h"
 #include "CGL/vector3D.h"
+#include "halfEdgeMesh.h"
 #include "mutablePriorityQueue.h"
 #include <complex>
 #include <vector>
-
 using namespace std;
 
 namespace CGL
@@ -183,7 +183,75 @@ namespace CGL
 		// TODO Part 5.
 		// This method should split the given edge and return an iterator to the newly inserted vertex.
 		// The halfedge of this vertex should point along the edge that was split, rather than the new edges.
-		return VertexIter();
+		//
+		HalfedgeIter h0 = e0->halfedge();
+		HalfedgeIter h1 = e0->halfedge()->twin();
+
+		VertexIter a = h1->vertex();
+		VertexIter b = h1->next()->twin()->vertex();
+		VertexIter c = h0->vertex();
+		VertexIter d = h0->next()->twin()->vertex();
+
+		FaceIter f0 = h0->face();
+		FaceIter f1 = h1->face();
+
+		// Get counterclockwise halfedges
+		HalfedgeIter ad = h0->next(); HalfedgeIter dc = ad->next();
+		HalfedgeIter cb = h1->next(); HalfedgeIter ba = cb->next();
+		
+		// Create m and assign its fields
+		VertexIter m = newVertex();
+		m->getVertex()->position = a->position / 2 + c->position / 2;
+		m->halfedge() = h0;
+
+		// Create new halfedges
+		HalfedgeIter h2 = newHalfedge(); HalfedgeIter h3 = newHalfedge();
+		HalfedgeIter h4 = newHalfedge(); HalfedgeIter h5 = newHalfedge();
+		HalfedgeIter h6 = newHalfedge(); HalfedgeIter h7 = newHalfedge();
+
+		// Handle halfedge twins
+		h0->twin() = h1; h1->twin() = h0;
+		h2->twin() = h3; h3->twin() = h2;
+		h4->twin() = h5; h5->twin() = h4;
+		h6->twin() = h7; h7->twin() = h6;
+
+		// Assign halfedge nexts
+		h7->next() = h0; h0->next() = ad; ad->next() = h7; 
+		h1->next() = h2; h2->next() = ba; ba->next() = h1;
+		h3->next() = h4; h4->next() = cb; cb->next() = h3;
+		h5->next() = h6; h6->next() = dc; dc->next() = h5;
+
+		// Assign even halfedge vertices  	// Assign odd halfedge vertices
+		h0 -> vertex() = m;               	h1 -> vertex() = a; a -> halfedge() = h1;
+		h2 -> vertex() = m;               	h3 -> vertex() = b; b -> halfedge() = h3;
+		h4 -> vertex() = m;               	h5 -> vertex() = c; c -> halfedge() = h5;
+		h6 -> vertex() = m;               	h7 -> vertex() = d; d -> halfedge() = h7;
+
+		// Create new edges
+		EdgeIter e1 = newEdge();
+		EdgeIter e2 = newEdge();
+		EdgeIter e3 = newEdge();
+
+		// Assign each edge an halfedge     // Assign each halfedge an edge.
+		e0->halfedge() = h0;                h0->edge() = e0; h1->edge() = e0;
+		e1->halfedge() = h2;                h2->edge() = e1; h3->edge() = e1;
+		e2->halfedge() = h4;                h4->edge() = e2; h5->edge() = e2;
+		e3->halfedge() = h6;                h6->edge() = e3; h7->edge() = e3;
+
+		// Create new faces
+		FaceIter f2 = newFace();
+		FaceIter f3 = newFace();
+
+		// Assign faces to halfedges
+		h7->face() = f0; h0->face() = f0; ad->face() = f0;
+		h1->face() = f1; h2->face() = f1; ba->face() = f1;
+		h3->face() = f2; h4->face() = f2; cb->face() = f2;
+		h5->face() = f3; h6->face() = f3; dc->face() = f3;
+
+		// Assign halfedges to faces
+		f0->halfedge() = h0; f1->halfedge() = h2; f2->halfedge() = h4; f3->halfedge() = h6;
+
+		return m;
 	}
 
 
