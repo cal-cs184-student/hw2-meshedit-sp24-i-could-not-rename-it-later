@@ -82,14 +82,14 @@ namespace CGL
 		return evaluate1D(tmp, v);
 	}
 
-
+	/**
+	 * Returns an approximate unit normal at this vertex computed by the area-
+	 * weighted average of the normals of neighboring triangles.
+	 *
+	 * @return Approximate unit normal at this vertex
+	 */
 	Vector3D Vertex::normal( void ) const
 	{
-		// TODO Part 3.
-		// Returns an approximate unit normal at this vertex, computed by
-		// taking the area-weighted average of the normals of neighboring
-		// triangles, then normalizing.
-		
 		std::vector<Vector3D> outer_vertices;
 		std::vector<Vector3D> cross_products;
 		Vector3D retval = Vector3D();
@@ -119,10 +119,13 @@ namespace CGL
 		return retval.unit();
 	}
 
+	/** Flips the given edge and returns an iterator to the flipped edge
+	 * 
+	 * @param e0 	The edge to flip.
+	 * @return An iterator to the flipped edge
+	 */
 	EdgeIter HalfedgeMesh::flipEdge( EdgeIter e0 )
 	{
-		// TODO Part 4.
-		// This method should flip the given edge and return an iterator to the flipped edge.
 		HalfedgeIter h0 = e0->halfedge();
 		HalfedgeIter h1 = h0->twin();
 
@@ -157,33 +160,22 @@ namespace CGL
 		// Set vertices appropriately.
 		cb->vertex()->halfedge() = cb;
 		ad->vertex()->halfedge() = ad;
+
 		// Set faces appropriately.
 		cb->face()->halfedge() = cb;
 		ad->face()->halfedge() = ad;
 
-		//printf("halfedge: %p\nnext: %p, twin: %p\nvertex: %p, edge: %p, face: %p\n\n",
-		// 		h0, h0->next(), h0->twin(), h0->vertex(), h0->edge(), h0->face());
-		/*check_for(h0);
-		printf("\n");
-		check_for(h0->next());
-		printf("\n");
-		check_for(h0->next()->next());
-		printf("~~~~~~~~~~~~~~~~~~\n");
-		check_for(h1);
-		printf("\n");
-		check_for(h1->next());
-		printf("\n");
-		check_for(h1->next()->next());
-		printf("------------------\n");*/
 		return e0;
 	}
 
+	/** 
+	 * Splits the given edge and returns an iterator to the newly inserted vertex. The returned vertex's
+	 * halfedge will point along the split edge, rather than any of the new edges.
+	 * @param e0           The edge to split
+	 * @return             An iterator to the newly inserted vertex.
+	 */
 	VertexIter HalfedgeMesh::splitEdge( EdgeIter e0 )
 	{
-		// TODO Part 5.
-		// This method should split the given edge and return an iterator to the newly inserted vertex.
-		// The halfedge of this vertex should point along the edge that was split, rather than the new edges.
-		//
 		HalfedgeIter h0 = e0->halfedge();
 		HalfedgeIter h1 = e0->halfedge()->twin();
 
@@ -203,6 +195,8 @@ namespace CGL
 		VertexIter m = newVertex();
 		m->getVertex()->position = a->position / 2 + c->position / 2;
 		m->halfedge() = h0;
+		m->isNew = true;
+		m->newPosition = e0->newPosition;
 
 		// Create new halfedges
 		HalfedgeIter h2 = newHalfedge(); HalfedgeIter h3 = newHalfedge();
@@ -228,9 +222,10 @@ namespace CGL
 		h6 -> vertex() = m;               	h7 -> vertex() = d; d -> halfedge() = h7;
 
 		// Create new edges
-		EdgeIter e1 = newEdge();
-		EdgeIter e2 = newEdge();
-		EdgeIter e3 = newEdge();
+						 		  e0->isNew = false;
+		EdgeIter e1 = newEdge();  e1->isNew = true;
+		EdgeIter e2 = newEdge();  e2->isNew = false;
+		EdgeIter e3 = newEdge();  e3->isNew = true;
 
 		// Assign each edge an halfedge     // Assign each halfedge an edge.
 		e0->halfedge() = h0;                h0->edge() = e0; h1->edge() = e0;
@@ -254,28 +249,68 @@ namespace CGL
 		return m;
 	}
 
-
-
+	/**
+	 * Increase the number of triangles in the mesh using Loop subdivision.
+	 * @param mesh    A mesh representing a model in 3D
+	 */
 	void MeshResampler::upsample( HalfedgeMesh& mesh )
 	{
-		// TODO Part 6.
-		// This routine should increase the number of triangles in the mesh using Loop subdivision.
-		// One possible solution is to break up the method as listed below.
-
 		// 1. Compute new positions for all the vertices in the input mesh, using the Loop subdivision rule,
 		// and store them in Vertex::newPosition. At this point, we also want to mark each vertex as being
 		// a vertex of the original mesh.
+		for (VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++ ) {
+			int n = v->degree();
+			float u = n == 3 ? 3.0/16.0 : 3.0 / (8 * n);
+			Vector3D neighbor_position_sum = Vector3D();
+
+			HalfedgeCIter h = v->halfedge();                     
+			do {
+				HalfedgeCIter h_twin = h->twin();                
+				VertexCIter v_neighbor = h_twin->vertex();       
+												  
+				neighbor_position_sum += v_neighbor->position;
+
+				h = h_twin->next();                             
+			} while(h != v->halfedge());                         
+		
+
+			v->newPosition = (1 - n * u) * v->position + u * neighbor_position_sum;
+			v->isNew = false;
+		}
 
 		// 2. Compute the updated vertex positions associated with edges, and store it in Edge::newPosition.
+		for (EdgeIter e = mesh.edgesBegin(); e != mesh.edgesEnd(); e++) {
+			VertexCIter v0 = e->halfedge()->vertex();
+			VertexCIter v1 = e->halfedge()->twin()->vertex();
+			VertexCIter v2 = e->halfedge()->next()->twin()->vertex();
+			VertexCIter v3 = e->halfedge()->twin()->next()->twin()->vertex();
+
+			e->isNew = false;
+			e->newPosition = 3.0/8.0 * (v0->position + v1->position) 
+						   + 1.0/8.0 * (v2->position + v3->position);
+		}
 
 		// 3. Split every edge in the mesh, in any order. For future reference, we're also going to store some
 		// information about which subdivide edges come from splitting an edge in the original mesh, and which edges
 		// are new, by setting the flat Edge::isNew. Note that in this loop, we only want to iterate over edges of
 		// the original mesh---otherwise, we'll end up splitting edges that we just split (and the loop will never end!)
+		EdgeIter e = mesh.edgesBegin();
+		int nEdges = mesh.nEdges();
+		for (int i = 0; i < nEdges; i++) {
+			mesh.splitEdge(e);
+			e++;
+		}
 
 		// 4. Flip any new edge that connects an old and new vertex.
+		for (EdgeIter e = mesh.edgesBegin(); e != mesh.edgesEnd(); e++) {
+			if ((e->halfedge()->vertex()->isNew != e->halfedge()->twin()->vertex()->isNew) && e->isNew) {
+				mesh.flipEdge(e);
+			}
+		}
 
 		// 5. Copy the new vertex positions into final Vertex::position.
-
+		for (VertexIter v = mesh.verticesBegin(); v != mesh.verticesEnd(); v++ ) {
+			v->position = v->newPosition;
+		}
 	}
 }
