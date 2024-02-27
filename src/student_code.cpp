@@ -294,6 +294,8 @@ namespace CGL
 		// information about which subdivide edges come from splitting an edge in the original mesh, and which edges
 		// are new, by setting the flat Edge::isNew. Note that in this loop, we only want to iterate over edges of
 		// the original mesh---otherwise, we'll end up splitting edges that we just split (and the loop will never end!)
+		// NB: when splitting edges, we set the new vertex's newPosition field to the newPosition we calculated 
+		// and stored in the corresponding edge that we're splitting.
 		EdgeIter e = mesh.edgesBegin();
 		int nEdges = mesh.nEdges();
 		for (int i = 0; i < nEdges; i++) {
